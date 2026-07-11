@@ -1,0 +1,14 @@
+# --- Frontend ---
+streamlit
+pandas
+
+# --- Backend / agent orchestration ---
+langgraph
+langchain-core
+langchain-openai
+langchain-tavily
+python-dotenv
+pydantic
+
+# --- Image generation (Gemini) ---
+google-genai
