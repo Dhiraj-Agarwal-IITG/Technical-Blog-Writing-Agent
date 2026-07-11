@@ -150,12 +150,21 @@ def render_markdown_with_local_images(md: str):
 # ✅ NEW: Past blogs helpers
 # -----------------------------
 def list_past_blogs() -> List[Path]:
-    """
-    Returns .md files in current working directory, newest first.
-    Filters out obvious non-blog markdown files if needed.
-    """
+    ignore = {
+        "README.md",
+        "LICENSE.md",
+        "CHANGELOG.md",
+        "CONTRIBUTING.md",
+    }
+
     cwd = Path(".")
-    files = [p for p in cwd.glob("*.md") if p.is_file()]
+
+    files = [
+        p
+        for p in cwd.glob("*.md")
+        if p.is_file() and p.name not in ignore
+    ]
+
     files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
     return files
 
