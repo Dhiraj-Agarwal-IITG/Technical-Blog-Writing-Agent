@@ -53,29 +53,19 @@ def images_zip(images_dir: Path) -> Optional[bytes]:
 
 def try_stream(graph_app, inputs: Dict[str, Any]) -> Iterator[Tuple[str, Any]]:
     """
-    Stream graph progress if available; else invoke.
-    Yields ("updates"/"values"/"final", payload).
+    Stream node updates AND full-state snapshots together — runs the graph once.
+    "updates" payloads give per-node progress; the last "values" payload is the
+    correctly-reduced final state (e.g. parallel worker outputs merged into
+    `sections` the way LangGraph's own reducer does it).
     """
-    try:
-        for step in graph_app.stream(inputs, stream_mode="updates"):
-            yield ("updates", step)
-        out = graph_app.invoke(inputs)
-        yield ("final", out)
-        return
-    except Exception:
-        pass
-
-    try:
-        for step in graph_app.stream(inputs, stream_mode="values"):
-            yield ("values", step)
-        out = graph_app.invoke(inputs)
-        yield ("final", out)
-        return
-    except Exception:
-        pass
-
-    out = graph_app.invoke(inputs)
-    yield ("final", out)
+    final_state = None
+    for mode, payload in graph_app.stream(inputs, stream_mode=["updates", "values"]):
+        if mode == "updates":
+            yield ("updates", payload)
+        elif mode == "values":
+            final_state = payload
+    if final_state is not None:
+        yield ("final", final_state)
 
 
 def extract_latest_state(current_state: Dict[str, Any], step_payload: Any) -> Dict[str, Any]:
